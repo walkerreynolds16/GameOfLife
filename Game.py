@@ -4,34 +4,52 @@ from Box import Box
 from time import sleep
 import copy
 
-boxes = []
-nextBoxes = []
-onBoxes = []
+boxes = []  # List of all Boxes
+nextBoxes = []  # List of next tick boxes
+onBoxes = []  # List of boxes that are on
 canvas = None
-tickTime = (1 / 1)  # 1 / fps
+tickTime = (1 / 60)  # 1 / fps
 cWidth = 500
 cHeight = 500
-boxSize = 25
+boxSize = 25  # Each box is boxSize x boxSize in pixels
+wBoxes = cWidth / boxSize
+hBoxes = cHeight / boxSize
+
+# Function used to setup first on boxes
 
 
 def setFirstBoxes():
     global boxes, onBoxes
 
     for box in boxes:
-        # rand = random.randint(0,9)
+        # Random starting boxes
+        rand = random.randint(0,9)
 
-        # if(rand < 1):
-        #     box.on = True
-        #     onBoxes.append(box)
-        #     canvas.itemconfig(box.num, fill="yellow")
-
-        if(box.row == 10 and box.col >= 5 and box.col < 15):
+        if(rand < 3):
             box.on = True
             onBoxes.append(box)
             canvas.itemconfig(box.num, fill="yellow")
 
+        # if(box.row == 10 and box.col >= 5 and box.col < 15):
+        #     box.on = True
+        #     onBoxes.append(box)
+        #     canvas.itemconfig(box.num, fill="yellow")
+
+
+def numOfNeighors(box):
+    numOfNeighors = 0
+    for n in box.neighbors:
+        box = findBoxByCord(n[0], n[1])
+
+        if(box.on):
+            numOfNeighors += 1
+
+    return numOfNeighors
+
 
 '''
+*** Rules for John Conway's Game of Life ***
+
 For a space that is 'populated':
     Each cell with one or no neighbors dies, as if by solitude.
     Each cell with four or more neighbors dies, as if by overpopulation.
@@ -40,23 +58,22 @@ For a space that is 'empty' or 'unpopulated'
     Each cell with three neighbors becomes populated.
 '''
 
+# Function called on each tick
+# Contains main Game of Life Logic
+
 
 def onTick():
     global boxes
     global onBoxes
     global nextBoxes
 
-    print(len(onBoxes))
+    # print(len(onBoxes))
 
     for temp in boxes:
-        neighborsOn = 0
+
         box = copy.copy(temp)
+        neighborsOn = numOfNeighors(box)
 
-        print(len(box.neighbors))
-        for n in box.neighbors:
-
-            if(n in onBoxes):
-                neighborsOn += 1
 
         if(box.on):
             # print(box)
@@ -70,6 +87,8 @@ def onTick():
                 box.on = False
                 onBoxes.remove(box)
                 canvas.itemconfig(box.num, fill="gray")
+            # elif(neighborsOn == 2 or neighborsOn == 3):
+            #     # print("Survives")
         else:
             if(neighborsOn == 3):
                 box.on = True
@@ -77,9 +96,11 @@ def onTick():
                 canvas.itemconfig(box.num, fill="yellow")
 
         nextBoxes.append(box)
-    print(len(nextBoxes))
+    # print(len(nextBoxes))
     boxes = nextBoxes
     nextBoxes = []
+
+# Adds neighbors to each box
 
 
 def fillNeighbors():
@@ -88,22 +109,31 @@ def fillNeighbors():
         row = box.row
         col = box.col
 
-        temp.append(findBoxByCord(row - 1, col))  # Up
-        temp.append(findBoxByCord(row + 1, col))  # Down
-        temp.append(findBoxByCord(row, col - 1))  # Left
-        temp.append(findBoxByCord(row, col + 1))  # Right
 
-        temp.append(findBoxByCord(row - 1, col-1))  # UpLeft
-        temp.append(findBoxByCord(row - 1, col+1))  # UpRight
-        temp.append(findBoxByCord(row + 1, col-1))  # DownLeft
-        temp.append(findBoxByCord(row + 1, col+1))  # DownRight
+        if(row - 1 >= 0):
+            temp.append((row - 1, col))
+        if(row + 1 < hBoxes):
+            temp.append((row + 1, col))
+        if(col - 1 >= 0):
+            temp.append((row, col - 1))
+        if(col + 1 < wBoxes):
+            temp.append((row, col + 1))
 
-        for item in temp:
-            if(item is not None):
-                box.neighbors.append(item)
+        if(row - 1 >= 0 and col - 1 >= 0):
+            temp.append((row - 1, col - 1))
+        if(row - 1 >= 0 and col + 1 < wBoxes):
+            temp.append((row - 1, col + 1))
+        if(row + 1 < hBoxes and col - 1 >= 0):
+            temp.append((row + 1, col - 1))
+        if(row + 1 < hBoxes and col + 1 < wBoxes):
+            temp.append((row + 1, col + 1))
+
+        box.neighbors = temp
+
+# Finds a box by the number given
 
 
-def findBox(num):
+def findBoxByNum(num):
     if(num < 1 or num > ((cWidth / boxSize) * (cWidth / boxSize))):
         return None
 
@@ -112,6 +142,8 @@ def findBox(num):
             return i
 
     return None
+
+# Finds a box by the coordinates given
 
 
 def findBoxByCord(row, col):
@@ -124,20 +156,24 @@ def findBoxByCord(row, col):
 
     return None
 
+# Function called whenever a box is pressed
+
 
 def boxClicked(event):
     global onBoxes
 
     num = canvas.find_withtag(CURRENT)[0]
-    print(num)
-    box = findBox(num)
+    # print(num)
+    box = findBoxByNum(num)
     if(box is not None):
-        box.printNeighbors()
+        # box.printNeighbors()
         box.on = True
         canvas.itemconfig(CURRENT, fill="yellow")
 
         if(box not in onBoxes):
             onBoxes.append(box)
+
+# Clears all boxes
 
 
 def clearBoxes():
@@ -165,6 +201,20 @@ def setupWindow():
     fillNeighbors()
 
     setFirstBoxes()
+
+    # box = findBoxByCord(10,10)
+
+    # print("NumOfNeigh = " + str(numOfNeighors(box)))
+    # # print(box.on)
+
+    # # onTick()
+
+    # box = findBoxByCord(10,10)
+
+    # print("NumOfNeigh = " + str(numOfNeighors(box)))
+    # print(box.on)
+
+    # win.mainloop()
 
     while True:
         win.update_idletasks()
