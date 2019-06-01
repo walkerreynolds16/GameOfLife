@@ -2,49 +2,6 @@ from tkinter import *
 import random
 from Box import Box
 from time import sleep
-import copy
-
-boxes = []  # List of all Boxes
-nextBoxes = []  # List of next tick boxes
-onBoxes = []  # List of boxes that are on
-canvas = None
-tickTime = (1 / 60)  # 1 / fps
-cWidth = 500
-cHeight = 500
-boxSize = 25  # Each box is boxSize x boxSize in pixels
-wBoxes = cWidth / boxSize
-hBoxes = cHeight / boxSize
-
-# Function used to setup first on boxes
-
-
-def setFirstBoxes():
-    global boxes, onBoxes
-
-    for box in boxes:
-        # Random starting boxes
-        rand = random.randint(0,9)
-
-        if(rand < 3):
-            box.on = True
-            onBoxes.append(box)
-            canvas.itemconfig(box.num, fill="yellow")
-
-        # if(box.row == 10 and box.col >= 5 and box.col < 15):
-        #     box.on = True
-        #     onBoxes.append(box)
-        #     canvas.itemconfig(box.num, fill="yellow")
-
-
-def numOfNeighors(box):
-    numOfNeighors = 0
-    for n in box.neighbors:
-        box = findBoxByCord(n[0], n[1])
-
-        if(box.on):
-            numOfNeighors += 1
-
-    return numOfNeighors
 
 
 '''
@@ -58,22 +15,62 @@ For a space that is 'empty' or 'unpopulated'
     Each cell with three neighbors becomes populated.
 '''
 
-# Function called on each tick
-# Contains main Game of Life Logic
+boxes = []  # List of all Boxes
+nextBoxes = []  # List of next tick boxes
+canvas = None
+tickTime = (1 / 60)  # 1 / fps
+cWidth = 500
+cHeight = 500
+boxSize = 25  # Each box is boxSize x boxSize in pixels
+wBoxes = cWidth / boxSize
+hBoxes = cHeight / boxSize
+
+
+
+# Function used to setup first on boxes
+
+
+def setFirstBoxes():
+    global boxes
+
+    for box in boxes:
+        # Random starting boxes
+        rand = random.randint(0, 9)
+
+        if(rand < 3):
+            box.on = True
+            canvas.itemconfig(box.num, fill="yellow")
+
+        # Turns on a middle row of boxes
+        # if(box.row == 10 and box.col >= 5 and box.col < 15):
+        #     box.on = True
+        #     canvas.itemconfig(box.num, fill="yellow")
+
+# Returns the number of neighbors that are on for a specific box
+
+
+def numOfNeighors(box):
+    numOfNeighors = 0
+    for n in box.neighbors:
+        box = findBoxByCord(n[0], n[1])
+
+        if(box.on):
+            numOfNeighors += 1
+
+    return numOfNeighors
+
+
+# Function called on each tick and contains main Game of Life Logic
 
 
 def onTick():
     global boxes
-    global onBoxes
     global nextBoxes
-
-    # print(len(onBoxes))
 
     for temp in boxes:
 
         box = copy.copy(temp)
         neighborsOn = numOfNeighors(box)
-
 
         if(box.on):
             # print(box)
@@ -81,18 +78,15 @@ def onTick():
             # print()
             if(neighborsOn == 1 or neighborsOn == 0):
                 box.on = False
-                onBoxes.remove(box)
                 canvas.itemconfig(box.num, fill="gray")
             elif(neighborsOn >= 4):
                 box.on = False
-                onBoxes.remove(box)
                 canvas.itemconfig(box.num, fill="gray")
             # elif(neighborsOn == 2 or neighborsOn == 3):
             #     # print("Survives")
         else:
             if(neighborsOn == 3):
                 box.on = True
-                onBoxes.append(box)
                 canvas.itemconfig(box.num, fill="yellow")
 
         nextBoxes.append(box)
@@ -108,7 +102,6 @@ def fillNeighbors():
         temp = []
         row = box.row
         col = box.col
-
 
         if(row - 1 >= 0):
             temp.append((row - 1, col))
@@ -160,7 +153,6 @@ def findBoxByCord(row, col):
 
 
 def boxClicked(event):
-    global onBoxes
 
     num = canvas.find_withtag(CURRENT)[0]
     # print(num)
@@ -170,14 +162,7 @@ def boxClicked(event):
         box.on = True
         canvas.itemconfig(CURRENT, fill="yellow")
 
-        if(box not in onBoxes):
-            onBoxes.append(box)
-
-# Clears all boxes
-
-
-def clearBoxes():
-    canvas.delete("all")
+# Function that sets up the whole program
 
 
 def setupWindow():
