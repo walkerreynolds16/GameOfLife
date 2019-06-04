@@ -2,6 +2,7 @@ from tkinter import *
 import random
 from Box import Box
 from time import sleep
+import copy
 
 
 '''
@@ -25,8 +26,6 @@ boxSize = 25  # Each box is boxSize x boxSize in pixels
 wBoxes = cWidth / boxSize
 hBoxes = cHeight / boxSize
 
-
-
 # Function used to setup first on boxes
 
 
@@ -46,8 +45,7 @@ def setFirstBoxes():
         #     box.on = True
         #     canvas.itemconfig(box.num, fill="yellow")
 
-# Returns the number of neighbors that are on for a specific box
-
+# Returns the number of neighbors that are
 
 def numOfNeighors(box):
     numOfNeighors = 0
@@ -163,7 +161,6 @@ def boxClicked(event):
         canvas.itemconfig(CURRENT, fill="yellow")
 
 # Function that sets up the whole program
-
 
 def setupWindow():
     global boxes
